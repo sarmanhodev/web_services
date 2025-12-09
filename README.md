@@ -2,7 +2,9 @@
 
 Este projeto é um **WebService em FastAPI** responsável por **sumarizar
 textos longos** utilizando modelos de Deep Learning da biblioteca
-**Hugging Face Transformers**.
+**Hugging Face Transformers**, além de um pipeline inteligente de
+pré‑processamento que envolve **tradução automática** para otimizar a
+qualidade dos resumos.
 
 A API expõe endpoints que recebem um texto bruto e retornam um **resumo
 coerente, curto e informativo**, utilizando o modelo:
@@ -14,22 +16,65 @@ mundo para tarefas de **text summarization**.
 
 ------------------------------------------------------------------------
 
-## 🧩 Como funciona a sumarização?
+# 🌍 Por que traduzimos o texto antes de resumir?
 
-A aplicação usa o pipeline:
+O modelo **facebook/bart-large-cnn** é extremamente poderoso, porém ele
+possui uma característica crucial:
+
+👉 **Foi treinado exclusivamente em textos em inglês.**
+
+Para obter resumos de alta qualidade, o serviço segue um fluxo
+inteligente:
+
+1.  **Recebe o texto em português (ou outro idioma);**\
+2.  **Converte para inglês**, usando Google Translate ou
+    LibreTranslate;\
+3.  **Aplica o modelo de sumarização** (que funciona melhor em inglês);\
+4.  **Tradução reversa** → converte o resumo de volta para
+    **português**.
+
+### ✔️ Benefícios desse processo:
+
+-   Resumos muito mais coerentes\
+-   Melhor qualidade semântica\
+-   Maior precisão contextual\
+-   Frases mais curtas e naturais\
+-   Resultados mais próximos do esperado em aplicações reais
+
+### 🧠 Representação visual do fluxo:
+
+    Texto em Português
+            ↓ (tradução)
+         Texto em Inglês
+            ↓ (modelo BART)
+         Resumo em Inglês
+            ↓ (tradução)
+    Resumo Final em Português
+
+Esse método aumenta significativamente a precisão porque o modelo
+entende perfeitamente o inglês e gera resumos otimizados quando recebe
+entradas no idioma de treinamento.
+
+------------------------------------------------------------------------
+
+## 🧩 Como funciona a sumarização internamente?
+
+A aplicação utiliza:
 
 ``` python
 from transformers import pipeline
 summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 ```
 
-O pipeline realiza automaticamente: - tokenização do texto - segmentação
-em partes (se for muito grande) - geração do resumo com técnica
-*Sequence-to-Sequence* - pós-processamento do texto
+O pipeline realiza automaticamente: - tokenização do texto\
+- segmentação inteligente (caso o texto seja grande)\
+- geração do resumo com técnica *Sequence-to-Sequence*\
+- pós-processamento da saída
 
-O modelo BART: - é baseado em Transformer Encoder-Decoder - foi treinado
-em milhões de artigos e notícias - entende contexto longo - escreve
-resumos coerentes em linguagem natural
+O modelo BART: - utiliza arquitetura Transformer Encoder--Decoder\
+- foi treinado em milhões de artigos, notícias e documentos\
+- possui entendimento profundo de contexto\
+- gera resumos extremamente naturais
 
 ------------------------------------------------------------------------
 
@@ -37,9 +82,9 @@ resumos coerentes em linguagem natural
 
 ### **Backend**
 
--   FastAPI (Framework moderno e rápido)
--   Starlette (ASGI core)
--   Pydantic (validação de dados)
+-   FastAPI
+-   Starlette
+-   Pydantic
 -   Transformers (Hugging Face)
 -   Tokenizers / Safetensors
 -   Python 3.11
@@ -48,11 +93,16 @@ resumos coerentes em linguagem natural
 
 -   Docker
 -   Gunicorn + UvicornWorker
--   Pip / Virtualenv
+
+### **Tradução**
+
+-   googletrans
+-   libretranslatepy
+-   requests (fallback)
 
 ------------------------------------------------------------------------
 
-## 📁 Exemplo de Estrutura do Projeto
+## 📁 Estrutura do Projeto (exemplo)
 
     /
     ├── main.py
@@ -103,7 +153,7 @@ pip install -r requirements.txt
 ### 3. Executar a API
 
 ``` bash
-fastapi dev main.py
+uvicorn main:app --reload
 ```
 
 Acesse:
@@ -131,18 +181,20 @@ docker run -p 8000:8000 fastapi-summarizer
 
 # 🏭 Produção com Gunicorn + UvicornWorker
 
-O container sobe com:
+O container inicia com:
 
 ``` bash
 gunicorn main:app   -k uvicorn.workers.UvicornWorker   -w 2   -b 0.0.0.0:8000
 ```
 
-Benefícios: - Mais rápido que uvicorn standalone - Gerência múltiplos
-workers - Escalável - Altamente estável
+Bom para: - alta performance\
+- estabilidade\
+- produção real\
+- múltiplos workers
 
 ------------------------------------------------------------------------
 
-# 🧪 Modelo de Código do Summarizer
+# 🧪 Função de Sumarização (exemplo)
 
 ``` python
 from transformers import pipeline
@@ -166,18 +218,20 @@ def gerar_resumo(texto: str) -> str:
 
 # 📦 Dependências Principais
 
--   fastapi
--   transformers
--   tokenizers
--   safetensors
--   uvicorn
--   gunicorn
--   httpx
--   numpy
--   regex
--   lxml
--   pydantic
--   python-multipart
+-   fastapi\
+-   transformers\
+-   tokenizers\
+-   safetensors\
+-   uvicorn\
+-   gunicorn\
+-   httpx\
+-   numpy\
+-   regex\
+-   lxml\
+-   pydantic\
+-   python-multipart\
+-   googletrans\
+-   libretranslatepy
 
 Lista completa → `requirements.txt`
 
