@@ -5,7 +5,11 @@ from pydantic import BaseModel
 from functions import *
 from models import *
 
-app = FastAPI()
+app = FastAPI(
+    title="API de Inteligência Artificial",
+    description="API para resumo de textos e geração de queries SQL a partir de linguagem natural",
+    version="1.0.0"
+)
 
 # 🔹 Configurar CORS para permitir requisições de domínios externos
 app.add_middleware(
@@ -17,12 +21,12 @@ app.add_middleware(
 )
 
 
-@app.get("/", status_code=status.HTTP_200_OK)
-async def root():
-    return {"message": "Hello World"}
-
-
-@app.post("/resumir/")
+@app.post(
+    "/resumir/",
+    tags=["Processamento de Texto"],
+    summary="Resumir texto",
+    description="Recebe um texto longo e retorna um resumo gerado por IA"
+)
 async def resumir_texto(item: Item):
     try:
         resultado = await resume_text(item.texto)
@@ -35,7 +39,12 @@ async def resumir_texto(item: Item):
         )
 
 
-@app.post("/gerar_query")
+@app.post(
+    "/gerar_query",
+    tags=["Geração de SQL"],
+    summary="Gerar query SQL",
+    description="Converte uma pergunta em linguagem natural em uma query SQL"
+)
 async def gerar_query_sql(dados: PerguntaRequest):
     pergunta_usuario = dados.pergunta
 
@@ -48,3 +57,4 @@ async def gerar_query_sql(dados: PerguntaRequest):
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"erro": str(e)})
+
